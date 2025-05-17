@@ -1,0 +1,71 @@
+import React from 'react';
+import { ShieldCheck, KeyRound, Lock } from 'lucide-react';
+
+type EncryptionMethod = 'aes' | 'des' | 'rsa' | null;
+
+interface EncryptionOption {
+  id: EncryptionMethod;
+  name: string;
+  description: string;
+  icon: JSX.Element;
+}
+
+interface SelectEncryptionProps {
+  selectedMethod: EncryptionMethod;
+  onChange: (method: EncryptionMethod) => void;
+}
+
+const SelectEncryption: React.FC<SelectEncryptionProps> = ({ selectedMethod, onChange }) => {
+  const encryptionOptions: EncryptionOption[] = [
+    {
+      id: 'aes',
+      name: 'AES-256',
+      description: 'Advanced Encryption Standard, high security for sensitive data',
+      icon: <ShieldCheck className="h-6 w-6" />,
+    },
+    {
+      id: 'des',
+      name: 'Triple DES',
+      description: 'Applies DES algorithm three times to each data block',
+      icon: <KeyRound className="h-6 w-6" />,
+    },
+    {
+      id: 'rsa',
+      name: 'RSA',
+      description: 'Asymmetric encryption with public and private keys',
+      icon: <Lock className="h-6 w-6" />,
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {encryptionOptions.map((option) => (
+        <div
+          key={option.id}
+          className={`p-4 rounded-lg cursor-pointer transition-all border ${
+            selectedMethod === option.id
+              ? 'border-cyan-500 bg-cyan-900/20 shadow-lg shadow-cyan-500/10'
+              : 'border-gray-700 bg-gray-800/30 hover:bg-gray-800/50'
+          }`}
+          onClick={() => onChange(option.id)}
+        >
+          <div className="flex items-start space-x-3">
+            <div className={`p-2 rounded-full ${
+              selectedMethod === option.id ? 'text-cyan-500 bg-cyan-900/30' : 'text-gray-400 bg-gray-800'
+            }`}>
+              {option.icon}
+            </div>
+            <div>
+              <h3 className={`font-medium ${selectedMethod === option.id ? 'text-cyan-400' : 'text-white'}`}>
+                {option.name}
+              </h3>
+              <p className="text-sm text-gray-400 mt-1">{option.description}</p>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default SelectEncryption;
