@@ -9,9 +9,13 @@ import HomePage from './pages/HomePage';
 import DetectionPage from './pages/DetectionPage';
 import EmbeddingPage from './pages/EmbeddingPage';
 import ExtractionPage from './pages/ExtractionPage';
+import CompatibilityWarning from './components/ui/';
 import { AppProvider } from './context/AppContext';
+import { useCompatibilityCheck } from './utils/compatibilityCheck';
 
 function App() {
+  const { allFeaturesSupported } = useCompatibilityCheck();
+  
   const navItems = [
     { path: '/', label: 'Home', icon: <Home size={20} /> },
     { path: '/detect', label: 'AI Detection', icon: <Shield size={20} /> },
@@ -25,6 +29,11 @@ function App() {
         <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-900 to-gray-950 text-gray-100">
           <Header />
           <Navbar items={navItems} />
+          {!allFeaturesSupported && (
+            <div className="container mx-auto px-4 pt-4">
+              <CompatibilityWarning />
+            </div>
+          )}
           <main className="flex-grow container mx-auto px-4 py-6">
             <Routes>
               <Route path="/" element={<HomePage />} />

@@ -4,6 +4,7 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Dropzone from '../components/ui/Dropzone';
 import MediaTypeSelector from '../components/ui/MediaTypeSelector';
+import ProgressIndicator from '../components/ui/ProgressIndicator';
 import SelectEncryption from '../components/ui/SelectEncryption';
 import { useAppContext } from '../context/AppContext';
 import { encryptMessage } from '../utils/encryptionUtils';
@@ -68,30 +69,57 @@ const EmbeddingPage: React.FC = () => {
   };
   
   const handleEmbedding = async () => {
-    if (!validateInputs()) return;
+  if (!validateInputs()) return;
+  
+  setIsProcessing(true);
+  setError(null);
+  setCurrentOperation('embedding');
+  setProcessingProgress(0);
+  
+  try {
+    // Step 1: Encrypt the message (20% of progress)
+    setProcessingProgress(0.05);
+    const encryptedMessage = await encryptMessage(message, password, encryptionMethod!);
+    setProcessingProgress(0.2);
     
-    setIsProcessing(true);
-    setError(null);
+    // Step 2: Embed the encrypted message in the file (20% to 90%)
+    const updateProgress = (progress: number) => {
+      // Scale progress from 0-1 to 0.2-0.9
+      setProcessingProgress(0.2 + progress * 0.7);
+    };
     
-    try {
-      // Encrypt the message
-      const encryptedMessage = await encryptMessage(message, password, encryptionMethod!);
-      
-      // Embed the encrypted message in the file
-      if (mediaType === 'image') {
-        const imageWithMessage = await embedDataInImage(uploadedFile!, encryptedMessage);
-        setProcessedFileUrl(imageWithMessage);
-      } else if (mediaType === 'audio') {
-        const audioWithMessage = await embedDataInAudio(uploadedFile!, encryptedMessage);
-        setProcessedFileUrl(URL.createObjectURL(audioWithMessage));
-      }
-    } catch (err: any) {
-      console.error('Embedding error:', err);
-      setError(err.message || 'An error occurred during embedding. Please try again.');
-    } finally {
-      setIsProcessing(false);
+    // Set up progress event listeners for workers
+    window.addEventListener('steganography-progress', (e: CustomEvent) => {
+      updateProgress(e.detail.progress);
+    });
+    
+    // Embed the encrypted message in the file
+    if (mediaType === 'image') {
+      const imageWithMessage = await embedDataInImage(uploadedFile!, encryptedMessage);
+      setProcessedFileUrl(imageWithMessage);
+    } else if (mediaType === 'audio') {
+      const audioWithMessage = await embedDataInAudio(uploadedFile!, encryptedMessage);
+      setProcessedFileUrl(URL.createObjectURL(audioWithMessage));
     }
-  };
+    
+    // Cleanup progress event listener
+    window.removeEventListener('steganography-progress', (e: CustomEvent) => {
+      updateProgress(e.detail.progress);
+    });
+    
+    // Complete
+    setProcessingProgress(1);
+  } catch (err: any) {
+    console.error('Embedding error:', err);
+    setError(err.message || 'An error occurred during embedding. Please try again.');
+    setProcessingError(err.message || 'An error occurred during embedding.');
+  } finally {
+    setTimeout(() => {
+      setIsProcessing(false);
+      setCurrentOperation(null);
+    }, 500); // Keep the progress bar at 100% for a moment
+  }
+};
   
   const handleDownload = () => {
     if (!processedFileUrl) return;
@@ -198,6 +226,7 @@ const EmbeddingPage: React.FC = () => {
                   </p>
                 </div>
               )}
+              
               
               <Button
                 variant="primary"

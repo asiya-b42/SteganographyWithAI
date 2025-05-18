@@ -1,4 +1,4 @@
-// Image steganography utilities
+import { textToBinary, binaryToText } from './binaryUtils';
 
 // Helper function to get a new blank canvas
 const getCanvas = (width: number, height: number): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } => {
@@ -9,32 +9,40 @@ const getCanvas = (width: number, height: number): { canvas: HTMLCanvasElement; 
   return { canvas, ctx };
 };
 
-// Convert string to binary
-const textToBinary = (text: string): string => {
-  let binary = '';
-  for (let i = 0; i < text.length; i++) {
-    const charCode = text.charCodeAt(i);
-    const bin = charCode.toString(2);
-    binary += '0'.repeat(8 - bin.length) + bin; // Ensure 8 bits per character
-  }
-  return binary;
-};
+// Create a web worker for image processing
+let worker: Worker | null = null;
 
-// Convert binary to string
-const binaryToText = (binary: string): string => {
-  let text = '';
-  for (let i = 0; i < binary.length; i += 8) {
-    const byte = binary.substr(i, 8);
-    const charCode = parseInt(byte, 2);
-    text += String.fromCharCode(charCode);
+const getWorker = (): Worker => {
+  if (!worker) {
+    const workerUrl = new URL('../workers/imageSteganoWorker.ts', import.meta.url);
+    worker = new Worker(workerUrl, { type: 'module' });
   }
-  return text;
+  return worker;
 };
 
 // Embed data in the LSB of the image
 export const embedDataInImage = async (imageFile: File, data: string): Promise<string> => {
   return new Promise((resolve, reject) => {
+    if (!imageFile) {
+      reject(new Error('No image file provided'));
+      return;
+    }
+    
+    if (!data || data.length === 0) {
+      reject(new Error('No data provided to embed'));
+      return;
+    }
+    
+    // Check if Web Workers are supported
+    if (typeof Worker === 'undefined') {
+      // Fallback to the original implementation if workers aren't supported
+      // (Original code would go here)
+      reject(new Error('Your browser does not support Web Workers, which are required for this operation'));
+      return;
+    }
+    
     const img = new Image();
+    
     img.onload = () => {
       try {
         // Create canvas
@@ -43,54 +51,56 @@ export const embedDataInImage = async (imageFile: File, data: string): Promise<s
         
         // Get image data
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const pixels = imageData.data;
         
-        // Convert data to binary
-        const binary = textToBinary(data);
+        // Set up worker
+        const worker = getWorker();
         
-        // Ensure the image can hold all the data
-        // Each pixel can store 3 bits (one in each RGB channel)
-        const maxBits = (pixels.length / 4) * 3; // RGBA, but we only use RGB
-        if (binary.length > maxBits) {
-          reject(new Error(`Image too small to store data. Can store ${Math.floor(maxBits / 8)} bytes, but got ${Math.ceil(binary.length / 8)} bytes.`));
-          return;
-        }
-        
-        // Store the length of the data (32 bits) at the beginning
-        const dataLength = binary.length;
-        const lengthBinary = dataLength.toString(2).padStart(32, '0');
-        
-        // Combine length and data
-        const fullBinary = lengthBinary + binary;
-        
-        // Embed data
-        let bitIndex = 0;
-        for (let i = 0; i < pixels.length; i += 4) {
-          // Skip alpha channel
-          for (let j = 0; j < 3; j++) {
-            if (bitIndex < fullBinary.length) {
-              // Replace the least significant bit
-              pixels[i + j] = (pixels[i + j] & 0xFE) | parseInt(fullBinary[bitIndex], 2);
-              bitIndex++;
-            } else {
-              break;
-            }
+        // Set up the worker message handler
+        worker.onmessage = (e) => {
+          const { success, error, operation, modifiedImageData, progress } = e.data;
+          
+          if (progress !== undefined && operation === 'embed') {
+            // You could dispatch an event or update state to show progress
+            console.log(`Embedding progress: ${Math.round(progress * 100)}%`);
+            return;
           }
-          if (bitIndex >= fullBinary.length) break;
-        }
+          
+          if (!success) {
+            reject(new Error(error || 'Failed to embed data in image'));
+            return;
+          }
+          
+          if (operation === 'embed' && modifiedImageData) {
+            // Create a new ImageData object from the worker's data
+            const newImageData = new ImageData(
+              new Uint8ClampedArray(modifiedImageData.data),
+              modifiedImageData.width,
+              modifiedImageData.height
+            );
+            
+            // Put the modified image data back
+            ctx.putImageData(newImageData, 0, 0);
+            
+            // Get image URL
+            resolve(canvas.toDataURL('image/png'));
+          }
+        };
         
-        // Update image data
-        ctx.putImageData(imageData, 0, 0);
-        
-        // Get image URL
-        resolve(canvas.toDataURL('image/png'));
+        // Send the image data to the worker
+        // Send the image data to the worker
+        worker.postMessage({
+          operation: 'embed',
+          imageData,
+          message: data
+        });
       } catch (error) {
-        reject(error);
+        console.error('Error embedding data in image:', error);
+        reject(new Error('Failed to embed data in image: ' + (error instanceof Error ? error.message : 'Unknown error')));
       }
     };
     
-    img.onerror = (error) => {
-      reject(error);
+    img.onerror = () => {
+      reject(new Error('Failed to load image. The file might be corrupted.'));
     };
     
     // Load image
@@ -101,7 +111,19 @@ export const embedDataInImage = async (imageFile: File, data: string): Promise<s
 // Extract data from the LSB of the image
 export const extractDataFromImage = async (imageFile: File): Promise<string> => {
   return new Promise((resolve, reject) => {
+    if (!imageFile) {
+      reject(new Error('No image file provided'));
+      return;
+    }
+    
+    // Check if Web Workers are supported
+    if (typeof Worker === 'undefined') {
+      reject(new Error('Your browser does not support Web Workers, which are required for this operation'));
+      return;
+    }
+    
     const img = new Image();
+    
     img.onload = () => {
       try {
         // Create canvas
@@ -110,55 +132,43 @@ export const extractDataFromImage = async (imageFile: File): Promise<string> => 
         
         // Get image data
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const pixels = imageData.data;
         
-        // Extract the length (first 32 bits)
-        let binary = '';
-        let bitIndex = 0;
+        // Set up worker
+        const worker = getWorker();
         
-        // Extract the length
-        for (let i = 0; i < pixels.length && bitIndex < 32; i += 4) {
-          // Skip alpha channel
-          for (let j = 0; j < 3 && bitIndex < 32; j++) {
-            binary += (pixels[i + j] & 0x01).toString();
-            bitIndex++;
+        // Set up the worker message handler
+        worker.onmessage = (e) => {
+          const { success, error, operation, extractedMessage, progress } = e.data;
+          
+          if (progress !== undefined && operation === 'extract') {
+            // You could dispatch an event or update state to show progress
+            console.log(`Extraction progress: ${Math.round(progress * 100)}%`);
+            return;
           }
-        }
-        
-        // Parse the length
-        const dataLength = parseInt(binary.substring(0, 32), 2);
-        if (isNaN(dataLength) || dataLength <= 0 || dataLength > (pixels.length / 4) * 3) {
-          reject(new Error('Invalid or corrupted data in image.'));
-          return;
-        }
-        
-        // Extract the data
-        binary = '';
-        bitIndex = 0;
-        
-        for (let i = 0; i < pixels.length; i += 4) {
-          // Skip alpha channel
-          for (let j = 0; j < 3; j++) {
-            if (bitIndex >= 32) {
-              // After the length bits
-              binary += (pixels[i + j] & 0x01).toString();
-            }
-            bitIndex++;
-            if (bitIndex >= 32 + dataLength) break;
+          
+          if (!success) {
+            reject(new Error(error || 'Failed to extract data from image'));
+            return;
           }
-          if (bitIndex >= 32 + dataLength) break;
-        }
+          
+          if (operation === 'extract' && extractedMessage) {
+            resolve(extractedMessage);
+          }
+        };
         
-        // Convert binary to text
-        const text = binaryToText(binary.substring(0, dataLength));
-        resolve(text);
+        // Send the image data to the worker
+        worker.postMessage({
+          operation: 'extract',
+          imageData
+        });
       } catch (error) {
-        reject(error);
+        console.error('Error extracting data from image:', error);
+        reject(new Error('Failed to extract data from image: ' + (error instanceof Error ? error.message : 'Unknown error')));
       }
     };
     
-    img.onerror = (error) => {
-      reject(error);
+    img.onerror = () => {
+      reject(new Error('Failed to load image. The file might be corrupted.'));
     };
     
     // Load image
@@ -169,7 +179,19 @@ export const extractDataFromImage = async (imageFile: File): Promise<string> => 
 // Utility to detect hidden message in image
 export const detectHiddenMessageInImage = async (imageFile: File): Promise<{ hasHiddenContent: boolean; confidence: number }> => {
   return new Promise((resolve, reject) => {
+    if (!imageFile) {
+      reject(new Error('No image file provided'));
+      return;
+    }
+    
+    // Check if Web Workers are supported
+    if (typeof Worker === 'undefined') {
+      reject(new Error('Your browser does not support Web Workers, which are required for this operation'));
+      return;
+    }
+    
     const img = new Image();
+    
     img.onload = () => {
       try {
         // Create canvas
@@ -178,98 +200,43 @@ export const detectHiddenMessageInImage = async (imageFile: File): Promise<{ has
         
         // Get image data
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const pixels = imageData.data;
         
-        // Statistical analysis of LSBs
-        let anomalyScore = 0;
-        let totalPixels = pixels.length / 4;
+        // Set up worker
+        const worker = getWorker();
         
-        // Check first 32 bits for a valid length
-        let binary = '';
-        let bitIndex = 0;
-        
-        for (let i = 0; i < pixels.length && bitIndex < 32; i += 4) {
-          for (let j = 0; j < 3 && bitIndex < 32; j++) {
-            binary += (pixels[i + j] & 0x01).toString();
-            bitIndex++;
-          }
-        }
-        
-        const potentialLength = parseInt(binary, 2);
-        const validLengthPattern = potentialLength > 0 && potentialLength < totalPixels * 3;
-        
-        // If the length seems valid, increase suspicion
-        if (validLengthPattern) {
-          anomalyScore += 0.4;
-        }
-        
-        // Analyze LSB distribution
-        let lsbZeros = 0;
-        let lsbOnes = 0;
-        
-        // Sample pixels
-        const sampleSize = Math.min(10000, pixels.length / 4);
-        const step = Math.floor(pixels.length / 4 / sampleSize);
-        
-        for (let i = 0; i < pixels.length; i += 4 * step) {
-          for (let j = 0; j < 3; j++) {
-            const lsb = pixels[i + j] & 0x01;
-            if (lsb === 0) lsbZeros++;
-            else lsbOnes++;
-          }
-        }
-        
-        // Calculate ratio
-        const ratio = Math.abs(lsbZeros / (lsbZeros + lsbOnes) - 0.5);
-        
-        // Natural images tend to have a more random distribution of LSBs
-        // Images with hidden data often have a more uniform distribution
-        if (ratio < 0.05) {
-          // Very uniform distribution - suspicious
-          anomalyScore += 0.3;
-        } else if (ratio < 0.1) {
-          // Moderately uniform - somewhat suspicious
-          anomalyScore += 0.15;
-        }
-        
-        // Check for patterns in LSBs
-        let patternScore = 0;
-        let consecutiveMatches = 0;
-        
-        for (let i = 0; i < pixels.length - 8; i += 4) {
-          const pattern = [
-            pixels[i] & 0x01,
-            pixels[i + 1] & 0x01,
-            pixels[i + 2] & 0x01,
-          ];
+        // Set up the worker message handler
+        worker.onmessage = (e) => {
+          const { success, error, operation, detectionResult, progress } = e.data;
           
-          // Check if this matches a pattern for ASCII characters
-          if ((pattern[0] === 0 && pattern[1] === 0) || (pattern[1] === 0 && pattern[2] === 0)) {
-            consecutiveMatches++;
-          } else {
-            consecutiveMatches = 0;
+          if (progress !== undefined && operation === 'detect') {
+            // You could dispatch an event or update state to show progress
+            console.log(`Detection progress: ${Math.round(progress * 100)}%`);
+            return;
           }
           
-          if (consecutiveMatches > 5) {
-            patternScore += 0.1;
-            consecutiveMatches = 0;
+          if (!success) {
+            reject(new Error(error || 'Failed to analyze image for hidden content'));
+            return;
           }
-        }
+          
+          if (operation === 'detect' && detectionResult) {
+            resolve(detectionResult);
+          }
+        };
         
-        anomalyScore += Math.min(patternScore, 0.3);
-        
-        // Final decision
-        const hasHiddenContent = anomalyScore > 0.5;
-        const confidence = Math.min(anomalyScore, 0.95);
-        
-        resolve({ hasHiddenContent, confidence });
+        // Send the image data to the worker
+        worker.postMessage({
+          operation: 'detect',
+          imageData
+        });
       } catch (error) {
-        reject(error);
+        console.error('Error detecting hidden message in image:', error);
+        reject(new Error('Failed to analyze image: ' + (error instanceof Error ? error.message : 'Unknown error')));
       }
     };
     
-    img.onerror = (error) => {
-      reject(error);
+    img.onerror = () => {
+      reject(new Error('Failed to load image. The file might be corrupted.'));
     };
     
     // Load image
