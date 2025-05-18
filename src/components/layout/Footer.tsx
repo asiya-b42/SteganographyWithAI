@@ -1,72 +1,54 @@
 import React from 'react';
-import { Github, Twitter, Mail, Lock } from 'lucide-react';
+import { Lock, Info, Shield, Github } from 'lucide-react';
 
 const Footer: React.FC = () => {
+  const currentYear = new Date().getFullYear();
+  
   return (
-    <footer className="bg-gray-900 border-t border-gray-800 py-8">
+    <footer className="bg-slate-800 border-t border-slate-700 py-8">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div>
-            <div className="flex items-center space-x-2 text-xl font-bold mb-4">
-              <Lock className="text-cyan-400" size={24} />
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500">StegaSafe</span>
+        <div className="flex flex-col md:flex-row justify-between items-center">
+          <div className="mb-6 md:mb-0">
+            <div className="flex items-center space-x-2 text-xl font-bold mb-2">
+              <Lock className="text-indigo-500" size={24} />
+              <span className="gradient-text">SecureSteg</span>
             </div>
-            <p className="text-gray-400 text-sm mb-4">
-              Advanced steganography platform with AI detection capabilities for securing your communications.
+            <p className="text-slate-400 text-sm max-w-md">
+              Advanced steganography platform with modern encryption and AI detection.
+              All processing happens locally in your browser.
             </p>
-            <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Github size={20} />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Twitter size={20} />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Mail size={20} />
-              </a>
+          </div>
+          
+          <div className="flex space-x-8">
+            <div>
+              <h3 className="text-white font-medium mb-3">Resources</h3>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors flex items-center">
+                    <Info size={14} className="mr-1" />
+                    <span>How It Works</span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors flex items-center">
+                    <Shield size={14} className="mr-1" />
+                    <span>Security</span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors flex items-center">
+                    <Github size={14} className="mr-1" />
+                    <span>Source Code</span>
+                  </a>
+                </li>
+              </ul>
             </div>
-          </div>
-          
-          <div>
-            <h3 className="text-white font-medium mb-4">Resources</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">How Steganography Works</a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">Security Best Practices</a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">API Documentation</a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</a>
-              </li>
-            </ul>
-          </div>
-          
-          <div>
-            <h3 className="text-white font-medium mb-4">Support</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">FAQ</a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">Contact Us</a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">Report a Bug</a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">Feature Request</a>
-              </li>
-            </ul>
           </div>
         </div>
         
-        <div className="mt-8 pt-6 border-t border-gray-800 text-center text-gray-500 text-sm">
-          <p>© 2025 StegaSafe. All rights reserved.</p>
-          <p className="mt-2">All processing happens in your browser. Your files never leave your device.</p>
+        <div className="mt-8 pt-4 border-t border-slate-700 text-center text-slate-500 text-sm">
+          <p>© {currentYear} SecureSteg. All rights reserved.</p>
+          <p className="mt-1">Your data never leaves your device.</p>
         </div>
       </div>
     </footer>

@@ -1,13 +1,52 @@
+//Audio steganography utilities
 
-// Web worker for audio processing
-let worker: Worker | null = null;
-
-const getWorker = (): Worker => {
-  if (!worker) {
-    const workerUrl = new URL('../workers/audioSteganoWorker.ts', import.meta.url);
-    worker = new Worker(workerUrl, { type: 'module' });
+// Make sure we have the appropriate types
+declare global {
+  interface Window {
+    AudioContext: typeof AudioContext;
+    webkitAudioContext: typeof AudioContext;
+    OfflineAudioContext: typeof OfflineAudioContext;
+    webkitOfflineAudioContext: typeof OfflineAudioContext;
   }
-  return worker;
+}
+
+// Get a properly supported AudioContext instance
+const getAudioContext = (): AudioContext => {
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) {
+    throw new Error('Web Audio API is not supported in this browser');
+  }
+  return new AudioCtx();
+};
+
+const getOfflineAudioContext = (numChannels: number, length: number, sampleRate: number): OfflineAudioContext => {
+  const OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  if (!OfflineCtx) {
+    throw new Error('Offline Audio Context is not supported in this browser');
+  }
+  return new OfflineCtx(numChannels, length, sampleRate);
+};
+
+// Convert string to binary
+const textToBinary = (text: string): string => {
+  let binary = '';
+  for (let i = 0; i < text.length; i++) {
+    const charCode = text.charCodeAt(i);
+    const bin = charCode.toString(2);
+    binary += '0'.repeat(8 - bin.length) + bin; // Ensure 8 bits per character
+  }
+  return binary;
+};
+
+// Convert binary to string
+const binaryToText = (binary: string): string => {
+  let text = '';
+  for (let i = 0; i < binary.length; i += 8) {
+    const byte = binary.substr(i, 8);
+    const charCode = parseInt(byte, 2);
+    text += String.fromCharCode(charCode);
+  }
+  return text;
 };
 
 // Read audio file and get audio buffer
@@ -21,16 +60,16 @@ const getAudioBuffer = async (audioFile: File): Promise<AudioBuffer> => {
       }
       
       try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const audioContext = getAudioContext();
         const audioBuffer = await audioContext.decodeAudioData(event.target.result as ArrayBuffer);
         resolve(audioBuffer);
       } catch (error) {
-        reject(new Error('Failed to decode audio file. The file might be corrupted or in an unsupported format.'));
+        reject(error);
       }
     };
     
-    reader.onerror = () => {
-      reject(new Error('Failed to read audio file'));
+    reader.onerror = (error) => {
+      reject(error);
     };
     
     reader.readAsArrayBuffer(audioFile);
@@ -40,95 +79,81 @@ const getAudioBuffer = async (audioFile: File): Promise<AudioBuffer> => {
 // Embed data in the LSB of audio samples
 export const embedDataInAudio = async (audioFile: File, data: string): Promise<Blob> => {
   try {
-    // Check if Web Workers are supported
-    if (typeof Worker === 'undefined') {
-      throw new Error('Your browser does not support Web Workers, which are required for this operation');
-    }
-    
-    if (!audioFile) {
-      throw new Error('No audio file provided');
-    }
-    
-    if (!data || data.length === 0) {
-      throw new Error('No data provided to embed');
-    }
-    
-    // Get audio buffer
     const audioBuffer = await getAudioBuffer(audioFile);
+    const audioContext = getAudioContext();
     
-    return new Promise((resolve, reject) => {
-      // Set up worker
-      const worker = getWorker();
+    // Get audio data
+    const channelData = audioBuffer.getChannelData(0); // Use the first channel
+    
+    // Convert data to binary
+    const binary = textToBinary(data);
+    
+    // Ensure the audio can hold all the data
+    // Each sample can store 1 bit
+    if (binary.length > channelData.length) {
+      throw new Error(`Audio too short to store data. Can store ${channelData.length} bits, but got ${binary.length} bits.`);
+    }
+    
+    // Store the length of the data (32 bits) at the beginning
+    const dataLength = binary.length;
+    const lengthBinary = dataLength.toString(2).padStart(32, '0');
+    
+    // Combine length and data
+    const fullBinary = lengthBinary + binary;
+    
+    // Create a copy of the channel data
+    const modifiedChannelData = new Float32Array(channelData);
+    
+    // Embed data
+    for (let i = 0; i < fullBinary.length; i++) {
+      // Replace the least significant bit
+      // For floating point, we'll modify a small amount that affects only the lowest bit when quantized
+      const bit = parseInt(fullBinary[i], 2);
+      const mask = 0.00001; // Small enough to not affect audio quality
       
-      // Set up the worker message handler
-      worker.onmessage = async (e) => {
-        const { success, error, operation, modifiedChannelData, sampleRate, numberOfChannels, progress } = e.data;
-        
-        if (progress !== undefined && operation === 'embed') {
-          // You could dispatch an event or update state to show progress
-          console.log(`Embedding progress: ${Math.round(progress * 100)}%`);
-          return;
-        }
-        
-        if (!success) {
-          reject(new Error(error || 'Failed to embed data in audio'));
-          return;
-        }
-        
-        if (operation === 'embed' && modifiedChannelData && sampleRate) {
-          try {
-            // Create a new audio context
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            
-            // Create a new buffer with the same properties as the original
-            const newBuffer = audioCtx.createBuffer(
-              numberOfChannels || audioBuffer.numberOfChannels,
-              audioBuffer.length,
-              sampleRate || audioBuffer.sampleRate
-            );
-            
-            // Set the modified channel data for channel 0
-            newBuffer.getChannelData(0).set(modifiedChannelData);
-            
-            // Copy the other channels if any
-            for (let i = 1; i < audioBuffer.numberOfChannels; i++) {
-              newBuffer.getChannelData(i).set(audioBuffer.getChannelData(i));
-            }
-            
-            // Create an offline context for rendering
-            const offlineCtx = new OfflineAudioContext(
-              newBuffer.numberOfChannels,
-              newBuffer.length,
-              newBuffer.sampleRate
-            );
-            
-            // Create a buffer source
-            const source = offlineCtx.createBufferSource();
-            source.buffer = newBuffer;
-            source.connect(offlineCtx.destination);
-            source.start(0);
-            
-            // Render the buffer
-            const renderedBuffer = await offlineCtx.startRendering();
-            
-            // Convert to WAV
-            const wavData = encodeWAV(renderedBuffer.getChannelData(0), renderedBuffer.sampleRate);
-            const outputBlob = new Blob([wavData], { type: 'audio/wav' });
-            
-            resolve(outputBlob);
-          } catch (error) {
-            reject(new Error('Failed to create audio output: ' + (error instanceof Error ? error.message : 'Unknown error')));
-          }
-        }
-      };
+      // Make the value even or odd based on the bit
+      const currentValue = modifiedChannelData[i];
+      const isEven = Math.floor(Math.abs(currentValue) * 10000) % 2 === 0;
       
-      // Send the audio buffer to the worker
-      worker.postMessage({
-        operation: 'embed',
-        audioBuffer,
-        message: data
-      });
-    });
+      if ((bit === 1 && isEven) || (bit === 0 && !isEven)) {
+        modifiedChannelData[i] += mask;
+      }
+    }
+    
+    // Create a new buffer with the modified data
+    const modifiedBuffer = audioContext.createBuffer(
+      audioBuffer.numberOfChannels,
+      audioBuffer.length,
+      audioBuffer.sampleRate
+    );
+    
+    // Copy the modified channel data
+    modifiedBuffer.copyToChannel(modifiedChannelData, 0);
+    
+    // Copy the other channels if any
+    for (let i = 1; i < audioBuffer.numberOfChannels; i++) {
+      modifiedBuffer.copyToChannel(audioBuffer.getChannelData(i), i);
+    }
+    
+    // Convert to WAV or other format
+    const offlineContext = getOfflineAudioContext(
+      modifiedBuffer.numberOfChannels,
+      modifiedBuffer.length,
+      modifiedBuffer.sampleRate
+    );
+    
+    const bufferSource = offlineContext.createBufferSource();
+    bufferSource.buffer = modifiedBuffer;
+    bufferSource.connect(offlineContext.destination);
+    bufferSource.start(0);
+    
+    const renderedBuffer = await offlineContext.startRendering();
+    
+    // Convert to WAV
+    const audioData = renderedBuffer.getChannelData(0);
+    const waveData = encodeWAV(audioData, renderedBuffer.sampleRate);
+    
+    return new Blob([waveData], { type: 'audio/wav' });
   } catch (error) {
     console.error('Error embedding data in audio:', error);
     throw error;
@@ -138,48 +163,37 @@ export const embedDataInAudio = async (audioFile: File, data: string): Promise<B
 // Extract data from the LSB of audio samples
 export const extractDataFromAudio = async (audioFile: File): Promise<string> => {
   try {
-    // Check if Web Workers are supported
-    if (typeof Worker === 'undefined') {
-      throw new Error('Your browser does not support Web Workers, which are required for this operation');
-    }
-    
-    if (!audioFile) {
-      throw new Error('No audio file provided');
-    }
-    
-    // Get audio buffer
     const audioBuffer = await getAudioBuffer(audioFile);
     
-    return new Promise((resolve, reject) => {
-      // Set up worker
-      const worker = getWorker();
-      
-      // Set up the worker message handler
-      worker.onmessage = (e) => {
-        const { success, error, operation, extractedMessage, progress } = e.data;
-        
-        if (progress !== undefined && operation === 'extract') {
-          // You could dispatch an event or update state to show progress
-          console.log(`Extraction progress: ${Math.round(progress * 100)}%`);
-          return;
-        }
-        
-        if (!success) {
-          reject(new Error(error || 'Failed to extract data from audio'));
-          return;
-        }
-        
-        if (operation === 'extract' && extractedMessage) {
-          resolve(extractedMessage);
-        }
-      };
-      
-      // Send the audio buffer to the worker
-      worker.postMessage({
-        operation: 'extract',
-        audioBuffer
-      });
-    });
+    // Get audio data
+    const channelData = audioBuffer.getChannelData(0); // Use the first channel
+    
+    // Extract the length (first 32 bits)
+    let binary = '';
+    
+    for (let i = 0; i < 32; i++) {
+      const value = channelData[i];
+      const isEven = Math.floor(Math.abs(value) * 10000) % 2 === 0;
+      binary += isEven ? '0' : '1';
+    }
+    
+    // Parse the length
+    const dataLength = parseInt(binary, 2);
+    if (isNaN(dataLength) || dataLength <= 0 || dataLength > channelData.length - 32) {
+      throw new Error('Invalid or corrupted data in audio.');
+    }
+    
+    // Extract the data
+    binary = '';
+    
+    for (let i = 32; i < 32 + dataLength; i++) {
+      const value = channelData[i];
+      const isEven = Math.floor(Math.abs(value) * 10000) % 2 === 0;
+      binary += isEven ? '0' : '1';
+    }
+    
+    // Convert binary to text
+    return binaryToText(binary);
   } catch (error) {
     console.error('Error extracting data from audio:', error);
     throw error;
@@ -189,55 +203,98 @@ export const extractDataFromAudio = async (audioFile: File): Promise<string> => 
 // Utility to detect hidden message in audio
 export const detectHiddenMessageInAudio = async (audioFile: File): Promise<{ hasHiddenContent: boolean; confidence: number }> => {
   try {
-    // Check if Web Workers are supported
-    if (typeof Worker === 'undefined') {
-      throw new Error('Your browser does not support Web Workers, which are required for this operation');
-    }
-    
-    if (!audioFile) {
-      throw new Error('No audio file provided');
-    }
-    
-    // Get audio buffer
     const audioBuffer = await getAudioBuffer(audioFile);
     
-    return new Promise((resolve, reject) => {
-      // Set up worker
-      const worker = getWorker();
+    // Get audio data
+    const channelData = audioBuffer.getChannelData(0); // Use the first channel
+    
+    // Statistical analysis of LSBs
+    let anomalyScore = 0;
+    
+    // Check first 32 bits for a valid length
+    let binary = '';
+    
+    for (let i = 0; i < 32; i++) {
+      const value = channelData[i];
+      const isEven = Math.floor(Math.abs(value) * 10000) % 2 === 0;
+      binary += isEven ? '0' : '1';
+    }
+    
+    const potentialLength = parseInt(binary, 2);
+    const validLengthPattern = potentialLength > 0 && potentialLength < channelData.length - 32;
+    
+    // If the length seems valid, increase suspicion
+    if (validLengthPattern) {
+      anomalyScore += 0.4;
+    }
+    
+    // Analyze LSB distribution
+    let lsbZeros = 0;
+    let lsbOnes = 0;
+    
+    // Sample audio samples
+    const sampleSize = Math.min(10000, channelData.length);
+    const step = Math.floor(channelData.length / sampleSize);
+    
+    for (let i = 0; i < channelData.length; i += step) {
+      const value = channelData[i];
+      const isEven = Math.floor(Math.abs(value) * 10000) % 2 === 0;
       
-      // Set up the worker message handler
-      worker.onmessage = (e) => {
-        const { success, error, operation, detectionResult, progress } = e.data;
-        
-        if (progress !== undefined && operation === 'detect') {
-          // You could dispatch an event or update state to show progress
-          console.log(`Detection progress: ${Math.round(progress * 100)}%`);
-          return;
-        }
-        
-        if (!success) {
-          reject(new Error(error || 'Failed to analyze audio for hidden content'));
-          return;
-        }
-        
-        if (operation === 'detect' && detectionResult) {
-          resolve(detectionResult);
-        }
-      };
+      if (isEven) lsbZeros++;
+      else lsbOnes++;
+    }
+    
+    // Calculate ratio
+    const ratio = Math.abs(lsbZeros / (lsbZeros + lsbOnes) - 0.5);
+    
+    // Natural audio tends to have a more random distribution of LSBs
+    // Audio with hidden data often has a more uniform distribution
+    if (ratio < 0.05) {
+      // Very uniform distribution - suspicious
+      anomalyScore += 0.3;
+    } else if (ratio < 0.1) {
+      // Moderately uniform - somewhat suspicious
+      anomalyScore += 0.15;
+    }
+    
+    // Check for patterns in LSBs
+    let patternScore = 0;
+    let consecutiveMatches = 0;
+    
+    for (let i = 32; i < channelData.length - 8; i++) {
+      const value = channelData[i];
+      const nextValue = channelData[i + 1];
       
-      // Send the audio buffer to the worker
-      worker.postMessage({
-        operation: 'detect',
-        audioBuffer
-      });
-    });
+      const isEven = Math.floor(Math.abs(value) * 10000) % 2 === 0;
+      const isNextEven = Math.floor(Math.abs(nextValue) * 10000) % 2 === 0;
+      
+      // Check for patterns typical of hidden ASCII data
+      if ((isEven && isNextEven) || (!isEven && !isNextEven)) {
+        consecutiveMatches++;
+      } else {
+        consecutiveMatches = 0;
+      }
+      
+      if (consecutiveMatches > 4) {
+        patternScore += 0.1;
+        consecutiveMatches = 0;
+      }
+    }
+    
+    anomalyScore += Math.min(patternScore, 0.3);
+    
+    // Final decision
+    const hasHiddenContent = anomalyScore > 0.5;
+    const confidence = Math.min(anomalyScore, 0.95);
+    
+    return { hasHiddenContent, confidence };
   } catch (error) {
     console.error('Error detecting hidden message in audio:', error);
     throw error;
   }
 };
 
-// Function to encode audio data to WAV format - unchanged
+// Function to encode audio data to WAV format
 function encodeWAV(samples: Float32Array, sampleRate: number): ArrayBuffer {
   const buffer = new ArrayBuffer(44 + samples.length * 2);
   const view = new DataView(buffer);

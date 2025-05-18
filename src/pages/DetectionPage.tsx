@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Shield, Info } from 'lucide-react';
 import Card from '../components/ui/Card';
@@ -55,7 +56,7 @@ const DetectionPage: React.FC = () => {
       }
       
       setDetectionResult(result);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Detection error:', err);
       setError('An error occurred during analysis. Please try again with a different file.');
     } finally {
@@ -64,15 +65,15 @@ const DetectionPage: React.FC = () => {
   };
   
   return (
-    <div className="py-6">
+    <div className="py-8">
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold mb-2 flex items-center justify-center">
-          <Shield className="text-cyan-400 mr-2" size={28} />
-          AI Steganography Detection
+          <Shield className="text-indigo-400 mr-2" size={28} />
+          <span className="gradient-text">AI Steganography Detection</span>
         </h1>
-        <p className="text-gray-300 max-w-2xl mx-auto">
-          Upload an image or audio file to analyze it for hidden messages. Our AI technology 
-          can detect the presence of steganographic content with high accuracy.
+        <p className="text-slate-300 max-w-2xl mx-auto">
+          Our advanced algorithms can analyze files to determine if they contain hidden messages.
+          Upload an image or audio file to see if it has steganographic content.
         </p>
       </div>
       
@@ -83,7 +84,7 @@ const DetectionPage: React.FC = () => {
         >
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-slate-300 mb-2">
                 Select media type to analyze
               </label>
               <MediaTypeSelector
@@ -94,7 +95,7 @@ const DetectionPage: React.FC = () => {
             
             {mediaType && (
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
                   Upload a file to analyze
                 </label>
                 <Dropzone
@@ -133,16 +134,16 @@ const DetectionPage: React.FC = () => {
           isLoading={isProcessing}
         />
         
-        <div className="mt-8 p-4 rounded-lg bg-gray-800/30 border border-gray-700">
+        <div className="mt-8 p-4 rounded-lg bg-slate-800/60 border border-slate-700">
           <h3 className="font-medium mb-2 flex items-center">
-            <Info size={18} className="text-cyan-400 mr-2" />
+            <Info size={18} className="text-indigo-400 mr-2" />
             How Detection Works
           </h3>
-          <p className="text-sm text-gray-400">
-            Our AI detection technology analyzes statistical patterns in the file's data, 
-            looking for anomalies that may indicate the presence of hidden information. 
-            The analysis evaluates bit distribution, unusual patterns, and other 
-            steganographic signatures to determine if the file likely contains hidden content.
+          <p className="text-sm text-slate-400">
+            Our detection technology analyzes statistical patterns in the file's data, 
+            looking for anomalies that may indicate hidden information. The analysis examines 
+            bit distribution, unusual patterns, and other steganographic signatures to 
+            determine if the file likely contains concealed data.
           </p>
         </div>
       </div>

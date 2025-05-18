@@ -15,9 +15,9 @@ const DetectionResult: React.FC<DetectionResultProps> = ({ result, isLoading }) 
     return (
       <Card className="mt-8">
         <div className="flex flex-col items-center py-6">
-          <div className="w-16 h-16 border-4 border-t-cyan-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
+          <div className="w-16 h-16 border-4 border-t-indigo-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
           <h3 className="mt-4 text-lg font-medium text-white">Analyzing file</h3>
-          <p className="text-gray-400 mt-2">Our AI is scanning for hidden content...</p>
+          <p className="text-slate-400 mt-2">Our AI is scanning for hidden content...</p>
         </div>
       </Card>
     );
@@ -51,7 +51,7 @@ const DetectionResult: React.FC<DetectionResultProps> = ({ result, isLoading }) 
           {hasHiddenContent ? 'Hidden Content Detected' : 'No Hidden Content Detected'}
         </h3>
         
-        <p className="text-gray-400 mt-2 text-center max-w-md">
+        <p className="text-slate-400 mt-2 text-center max-w-md">
           {hasHiddenContent
             ? 'Our AI has detected that this file likely contains hidden information.'
             : 'Our AI analysis suggests this file does not contain hidden information.'}
@@ -59,10 +59,10 @@ const DetectionResult: React.FC<DetectionResultProps> = ({ result, isLoading }) 
         
         <div className="w-full mt-6 mb-2">
           <div className="flex justify-between mb-1">
-            <span className="text-sm text-gray-400">Confidence level</span>
+            <span className="text-sm text-slate-400">Confidence level</span>
             <span className="text-sm font-medium text-white">{confidencePercent}%</span>
           </div>
-          <div className="w-full bg-gray-700 rounded-full h-2.5">
+          <div className="w-full bg-slate-700 rounded-full h-2.5">
             <div
               className={`h-2.5 rounded-full ${
                 hasHiddenContent ? 'bg-amber-500' : 'bg-green-500'
@@ -72,7 +72,7 @@ const DetectionResult: React.FC<DetectionResultProps> = ({ result, isLoading }) 
           </div>
         </div>
         
-        <p className="text-xs text-gray-500 mt-4 text-center">
+        <p className="text-xs text-slate-500 mt-4 text-center">
           Note: AI detection is not 100% accurate and should be used as a guide only.
         </p>
       </div>

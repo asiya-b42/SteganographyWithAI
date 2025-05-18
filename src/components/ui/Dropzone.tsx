@@ -42,7 +42,6 @@ const Dropzone: React.FC<DropzoneProps> = ({
   const validateFile = (file: File): boolean => {
     // Check file type
     const fileType = file.type;
-    const fileExtension = file.name.split('.').pop()?.toLowerCase();
     
     if (isImage && !fileType.startsWith('image/')) {
       setError('Please upload an image file');
@@ -120,12 +119,12 @@ const Dropzone: React.FC<DropzoneProps> = ({
       <div
         className={`relative border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center transition-all cursor-pointer min-h-[200px] ${
           isDragging
-            ? 'border-cyan-500 bg-cyan-500/10'
+            ? 'border-indigo-500 bg-indigo-500/10'
             : error
             ? 'border-red-500 bg-red-500/5'
             : preview
             ? 'border-green-500 bg-green-500/5'
-            : 'border-gray-600 hover:border-gray-500 bg-gray-800/30 hover:bg-gray-800/50'
+            : 'border-slate-600 hover:border-slate-500 bg-slate-800/30 hover:bg-slate-700/40'
         }`}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
@@ -145,7 +144,7 @@ const Dropzone: React.FC<DropzoneProps> = ({
           <div className="text-center">
             <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
             <p className="text-red-500">{error}</p>
-            <p className="mt-2 text-sm text-gray-400">Please try again with a different file</p>
+            <p className="mt-2 text-sm text-slate-400">Please try again with a different file</p>
           </div>
         ) : preview ? (
           <div className="text-center w-full">
@@ -167,22 +166,22 @@ const Dropzone: React.FC<DropzoneProps> = ({
               </div>
             )}
             <p className="text-green-400 font-medium">File uploaded successfully</p>
-            <p className="mt-1 text-sm text-gray-400">Click or drag to replace this file</p>
+            <p className="mt-1 text-sm text-slate-400">Click or drag to replace this file</p>
           </div>
         ) : (
           <div className="text-center">
             {isImage ? (
-              <FileImage className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <FileImage className="mx-auto h-12 w-12 text-slate-400 mb-4" />
             ) : isAudio ? (
-              <FileAudio className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <FileAudio className="mx-auto h-12 w-12 text-slate-400 mb-4" />
             ) : (
-              <FileUp className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <FileUp className="mx-auto h-12 w-12 text-slate-400 mb-4" />
             )}
-            <p className="text-gray-300">{label}</p>
-            <p className="mt-2 text-sm text-gray-400">
+            <p className="text-slate-300">{label}</p>
+            <p className="mt-2 text-sm text-slate-400">
               {isImage ? 'Supports JPG, PNG, WebP, GIF' : isAudio ? 'Supports MP3, WAV, OGG, FLAC' : 'Select a file'}
             </p>
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-slate-500">
               Max file size: {Math.round(maxSize / (1024 * 1024))}MB
             </p>
           </div>

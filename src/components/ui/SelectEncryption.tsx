@@ -44,22 +44,22 @@ const SelectEncryption: React.FC<SelectEncryptionProps> = ({ selectedMethod, onC
           key={option.id}
           className={`p-4 rounded-lg cursor-pointer transition-all border ${
             selectedMethod === option.id
-              ? 'border-cyan-500 bg-cyan-900/20 shadow-lg shadow-cyan-500/10'
-              : 'border-gray-700 bg-gray-800/30 hover:bg-gray-800/50'
+              ? 'border-indigo-500 bg-indigo-900/20 shadow-lg shadow-indigo-500/10'
+              : 'border-slate-700 bg-slate-800 hover:bg-slate-700'
           }`}
           onClick={() => onChange(option.id)}
         >
           <div className="flex items-start space-x-3">
             <div className={`p-2 rounded-full ${
-              selectedMethod === option.id ? 'text-cyan-500 bg-cyan-900/30' : 'text-gray-400 bg-gray-800'
+              selectedMethod === option.id ? 'text-indigo-400 bg-indigo-900/30' : 'text-slate-400 bg-slate-800'
             }`}>
               {option.icon}
             </div>
             <div>
-              <h3 className={`font-medium ${selectedMethod === option.id ? 'text-cyan-400' : 'text-white'}`}>
+              <h3 className={`font-medium ${selectedMethod === option.id ? 'text-indigo-400' : 'text-white'}`}>
                 {option.name}
               </h3>
-              <p className="text-sm text-gray-400 mt-1">{option.description}</p>
+              <p className="text-sm text-slate-400 mt-1">{option.description}</p>
             </div>
           </div>
         </div>

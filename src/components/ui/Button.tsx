@@ -21,13 +21,13 @@ const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props
 }) => {
-  const baseClasses = 'inline-flex items-center justify-center rounded-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900';
+  const baseClasses = 'inline-flex items-center justify-center rounded-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900';
   
   const variantClasses = {
-    primary: 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white shadow-lg shadow-cyan-500/20 focus:ring-cyan-500',
-    secondary: 'bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/20 focus:ring-purple-500',
-    outline: 'border border-gray-600 hover:border-gray-400 text-gray-300 hover:text-white bg-transparent hover:bg-gray-800 focus:ring-gray-500',
-    ghost: 'text-gray-300 hover:text-white hover:bg-gray-800/50 focus:ring-gray-500',
+    primary: 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20 focus:ring-indigo-500',
+    secondary: 'bg-cyan-600 hover:bg-cyan-700 text-white shadow-lg shadow-cyan-500/20 focus:ring-cyan-500',
+    outline: 'border border-indigo-500 text-indigo-400 hover:bg-indigo-900/30 bg-transparent focus:ring-indigo-500',
+    ghost: 'text-slate-300 hover:text-white hover:bg-slate-800 focus:ring-slate-500',
     danger: 'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/20 focus:ring-red-500',
   };
   

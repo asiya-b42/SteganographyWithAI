@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Shield, FileAudio, Image, Home } from 'lucide-react';
+import { Shield, FileText, Unlock, Home } from 'lucide-react';
 
 import Header from './components/layout/Header';
 import Navbar from './components/layout/Navbar';
@@ -9,32 +9,23 @@ import HomePage from './pages/HomePage';
 import DetectionPage from './pages/DetectionPage';
 import EmbeddingPage from './pages/EmbeddingPage';
 import ExtractionPage from './pages/ExtractionPage';
-import CompatibilityWarning from './components/ui/';
 import { AppProvider } from './context/AppContext';
-import { useCompatibilityCheck } from './utils/compatibilityCheck';
 
 function App() {
-  const { allFeaturesSupported } = useCompatibilityCheck();
-  
   const navItems = [
     { path: '/', label: 'Home', icon: <Home size={20} /> },
-    { path: '/detect', label: 'AI Detection', icon: <Shield size={20} /> },
-    { path: '/embed', label: 'Hide Message', icon: <FileAudio size={20} /> },
-    { path: '/extract', label: 'Extract Message', icon: <Image size={20} /> },
+    { path: '/embed', label: 'Hide Message', icon: <FileText size={20} /> },
+    { path: '/extract', label: 'Extract Message', icon: <Unlock size={20} /> },
+    { path: '/detect', label: 'Detect Hidden Message', icon: <Shield size={20} /> },
   ];
 
   return (
     <AppProvider>
       <Router>
-        <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-900 to-gray-950 text-gray-100">
+        <div className="flex flex-col min-h-screen bg-slate-900 text-slate-100">
           <Header />
           <Navbar items={navItems} />
-          {!allFeaturesSupported && (
-            <div className="container mx-auto px-4 pt-4">
-              <CompatibilityWarning />
-            </div>
-          )}
-          <main className="flex-grow container mx-auto px-4 py-6">
+          <main className="flex-grow container mx-auto px-4 py-8">
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/detect" element={<DetectionPage />} />

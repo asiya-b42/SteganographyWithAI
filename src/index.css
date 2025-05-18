@@ -1,3 +1,74 @@
+:root {
+  --primary-color: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-light: #818cf8;
+  --secondary-color: #06b6d4;
+  --secondary-hover: #0891b2;
+  --accent-color: #f97316;
+  --accent-hover: #ea580c;
+  --background-dark: #0f172a;
+  --background-medium: #1e293b;
+  --background-light: #334155;
+  --text-light: #f8fafc;
+  --text-muted: #94a3b8;
+  --border-color: #334155;
+  --success-color: #22c55e;
+  --warning-color: #eab308;
+  --danger-color: #ef4444;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+body {
+  background-color: var(--background-dark);
+  color: var(--text-light);
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-primary {
+  @apply bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-lg transition-colors shadow-lg;
+}
+
+.btn-secondary {
+  @apply bg-cyan-600 hover:bg-cyan-700 text-white font-medium px-4 py-2 rounded-lg transition-colors shadow-lg;
+}
+
+.btn-outline {
+  @apply border border-indigo-500 text-indigo-400 hover:bg-indigo-900/30 font-medium px-4 py-2 rounded-lg transition-colors;
+}
+
+.card {
+  @apply bg-slate-800 rounded-xl shadow-xl border border-slate-700 overflow-hidden;
+}
+
+.input-field {
+  @apply bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent;
+}
+
+.gradient-text {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-400;
+}
+
+.section-title {
+  @apply text-2xl font-bold mb-4 text-white;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background-medium);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--background-light);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-light);
+}

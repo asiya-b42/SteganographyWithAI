@@ -13,18 +13,18 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ items }) => {
   return (
-    <nav className="bg-gray-800/60 backdrop-blur-sm border-b border-gray-700">
+    <nav className="bg-slate-800 shadow-md">
       <div className="container mx-auto">
-        <ul className="flex overflow-x-auto md:justify-center">
+        <ul className="flex overflow-x-auto justify-center">
           {items.map((item) => (
             <li key={item.path}>
               <NavLink
                 to={item.path}
                 className={({ isActive }) =>
-                  `flex items-center space-x-2 px-4 py-3 border-b-2 whitespace-nowrap transition-all duration-200 ${
+                  `flex items-center space-x-2 px-6 py-3 transition-all duration-200 ${
                     isActive
-                      ? 'border-cyan-500 text-cyan-400 font-medium'
-                      : 'border-transparent text-gray-400 hover:text-white hover:bg-gray-700/50'
+                      ? 'text-indigo-400 border-b-2 border-indigo-500 font-medium'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-700'
                   }`
                 }
               >
