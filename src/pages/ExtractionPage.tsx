@@ -196,7 +196,14 @@ const ExtractionPage: React.FC = () => {
                 iconLeft={<FileText size={18} />}
                 fullWidth
                 isLoading={isProcessing}
-                onClick={handleExtraction}
+                onClick={() => {
+                  console.log('Extract button clicked');
+                  console.log('Password:', password);
+                  console.log('Encryption Method:', encryptionMethod);
+                  console.log('File:', uploadedFile);
+                  console.log('Media Type:', mediaType);
+                  handleExtraction();
+                }}
                 disabled={!password || !encryptionMethod || !uploadedFile || !mediaType}
               >
                 Extract Message

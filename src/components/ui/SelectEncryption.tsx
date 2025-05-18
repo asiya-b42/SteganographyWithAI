@@ -1,7 +1,7 @@
 import React from 'react';
-import { ShieldCheck, KeyRound, Lock } from 'lucide-react';
+import { ShieldCheck, KeyRound, Lock, AlignJustify, Grid, Hash, FileText } from 'lucide-react';
 
-type EncryptionMethod = 'aes' | 'des' | 'rsa' | null;
+type EncryptionMethod = 'aes' | 'des' | 'rsa' | 'caesar' | 'playfair' | 'hill' | 'vigenere' | null;
 
 interface EncryptionOption {
   id: EncryptionMethod;
@@ -35,10 +35,34 @@ const SelectEncryption: React.FC<SelectEncryptionProps> = ({ selectedMethod, onC
       description: 'Asymmetric encryption with public and private keys',
       icon: <Lock className="h-6 w-6" />,
     },
+    {
+      id: 'caesar',
+      name: 'Caesar Cipher',
+      description: 'Simple substitution cipher with fixed letter shift',
+      icon: <AlignJustify className="h-6 w-6" />,
+    },
+    {
+      id: 'playfair',
+      name: 'Playfair Cipher',
+      description: 'Encrypts pairs of letters using a key table',
+      icon: <Grid className="h-6 w-6" />,
+    },
+    {
+      id: 'hill',
+      name: 'Hill Cipher',
+      description: 'Uses matrix multiplication for encryption',
+      icon: <Hash className="h-6 w-6" />,
+    },
+    {
+      id: 'vigenere',
+      name: 'Vigenère Cipher',
+      description: 'Polyalphabetic substitution using a keyword',
+      icon: <FileText className="h-6 w-6" />,
+    },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {encryptionOptions.map((option) => (
         <div
           key={option.id}

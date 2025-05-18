@@ -221,7 +221,15 @@ const EmbeddingPage: React.FC = () => {
                 iconLeft={<FileText size={18} />}
                 fullWidth
                 isLoading={isProcessing}
-                onClick={handleEmbedding}
+                onClick={() => {
+                  console.log('Button clicked');
+                  console.log('Message:', message);
+                  console.log('Password:', password);
+                  console.log('Encryption Method:', encryptionMethod);
+                  console.log('File:', uploadedFile);
+                  console.log('Media Type:', mediaType);
+                  handleEmbedding();
+                }}
                 disabled={!message || !password || !encryptionMethod || !uploadedFile}
               >
                 Hide Message

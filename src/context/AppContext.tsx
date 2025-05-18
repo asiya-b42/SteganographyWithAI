@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 type MediaType = 'image' | 'audio' | null;
-type EncryptionMethod = 'aes' | 'des' | 'rsa' | null;
+type EncryptionMethod = 'aes' | 'des' | 'rsa' | 'caesar' | 'playfair' | 'hill' | 'vigenere' | null;
 
 interface AppContextType {
   mediaType: MediaType;
