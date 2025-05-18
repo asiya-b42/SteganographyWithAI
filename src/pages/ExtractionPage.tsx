@@ -5,6 +5,7 @@ import Button from '../components/ui/Button';
 import Dropzone from '../components/ui/Dropzone';
 import MediaTypeSelector from '../components/ui/MediaTypeSelector';
 import SelectEncryption from '../components/ui/SelectEncryption';
+import EncryptionForm from '../components/ui/EncryptionForm'; // Import the new component
 import { useAppContext } from '../context/AppContext';
 import { decryptMessage } from '../utils/encryptionUtils';
 import { extractDataFromImage } from '../utils/imageSteganoUtils';
@@ -44,7 +45,7 @@ const ExtractionPage: React.FC = () => {
   
   const validateInputs = () => {
     if (!password.trim()) {
-      setError('Please enter the password used for encryption');
+      setError('Please enter the password or key used for encryption');
       return false;
     }
     
@@ -93,7 +94,7 @@ const ExtractionPage: React.FC = () => {
       setExtractedMessage(decryptedMessage);
     } catch (err: any) {
       console.error('Extraction error:', err);
-      setError(err.message || 'Failed to extract or decrypt message. Check your password and encryption method.');
+      setError(err.message || 'Failed to extract or decrypt message. Check your password/key and encryption method.');
     } finally {
       setIsProcessing(false);
     }
@@ -112,6 +113,12 @@ const ExtractionPage: React.FC = () => {
     }
   };
   
+  const isClassicalCipher = 
+    encryptionMethod === 'caesar' || 
+    encryptionMethod === 'playfair' || 
+    encryptionMethod === 'hill' || 
+    encryptionMethod === 'vigenere';
+  
   return (
     <div className="py-8">
       <div className="mb-8 text-center">
@@ -121,7 +128,7 @@ const ExtractionPage: React.FC = () => {
         </h1>
         <p className="text-slate-300 max-w-2xl mx-auto">
           Retrieve and decrypt messages hidden in files. You'll need to know 
-          which encryption method was used and have the correct password.
+          which encryption method was used and have the correct password or key.
         </p>
       </div>
       
@@ -154,19 +161,28 @@ const ExtractionPage: React.FC = () => {
                     />
                   </div>
                   
-                  <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
-                      Decryption password
-                    </label>
-                    <input
-                      type="password"
-                      id="password"
-                      className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                      placeholder="Enter the password used for encryption"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                  {/* Use the EncryptionForm component for classical ciphers */}
+                  {encryptionMethod && isClassicalCipher ? (
+                    <EncryptionForm 
+                      encryptionMethod={encryptionMethod}
+                      passwordValue={password}
+                      setPasswordValue={setPassword}
                     />
-                  </div>
+                  ) : (
+                    <div>
+                      <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
+                        Decryption password
+                      </label>
+                      <input
+                        type="password"
+                        id="password"
+                        className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        placeholder="Enter the password used for encryption"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                    </div>
+                  )}
                   
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">
@@ -196,14 +212,7 @@ const ExtractionPage: React.FC = () => {
                 iconLeft={<FileText size={18} />}
                 fullWidth
                 isLoading={isProcessing}
-                onClick={() => {
-                  console.log('Extract button clicked');
-                  console.log('Password:', password);
-                  console.log('Encryption Method:', encryptionMethod);
-                  console.log('File:', uploadedFile);
-                  console.log('Media Type:', mediaType);
-                  handleExtraction();
-                }}
+                onClick={handleExtraction}
                 disabled={!password || !encryptionMethod || !uploadedFile || !mediaType}
               >
                 Extract Message
@@ -261,9 +270,9 @@ const ExtractionPage: React.FC = () => {
             Extraction Tips
           </h3>
           <ul className="text-sm text-slate-400 space-y-2 list-disc pl-5">
-            <li>You must know which encryption method was used to hide the message.</li>
-            <li>The password must be exactly the same as the one used during embedding.</li>
-            <li>If extraction fails, try a different encryption method or check the password.</li>
+            <li>You must select the same encryption method that was used to hide the message.</li>
+            <li>For classical ciphers, you need to enter the exact same key parameters used during embedding.</li>
+            <li>If extraction fails, double-check your encryption method and key.</li>
             <li>Some files may not contain any hidden messages, resulting in extraction errors.</li>
           </ul>
         </div>

@@ -5,6 +5,7 @@ import Button from '../components/ui/Button';
 import Dropzone from '../components/ui/Dropzone';
 import MediaTypeSelector from '../components/ui/MediaTypeSelector';
 import SelectEncryption from '../components/ui/SelectEncryption';
+import EncryptionForm from '../components/ui/EncryptionForm';
 import { useAppContext } from '../context/AppContext';
 import { encryptMessage } from '../utils/encryptionUtils';
 import { embedDataInImage } from '../utils/imageSteganoUtils';
@@ -59,7 +60,7 @@ const EmbeddingPage: React.FC = () => {
     }
     
     if (!password.trim()) {
-      setError('Please enter a password for encryption');
+      setError('Please enter a password or key for encryption');
       return false;
     }
     
@@ -119,6 +120,12 @@ const EmbeddingPage: React.FC = () => {
     document.body.removeChild(link);
   };
   
+  const isClassicalCipher = 
+    encryptionMethod === 'caesar' || 
+    encryptionMethod === 'playfair' || 
+    encryptionMethod === 'hill' || 
+    encryptionMethod === 'vigenere';
+  
   return (
     <div className="py-8">
       <div className="mb-8 text-center">
@@ -175,22 +182,31 @@ const EmbeddingPage: React.FC = () => {
                     />
                   </div>
                   
-                  <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
-                      Encryption password
-                    </label>
-                    <input
-                      type="password"
-                      id="password"
-                      className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                      placeholder="Enter a strong password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                  {/* Use the EncryptionForm component for classical ciphers */}
+                  {encryptionMethod && isClassicalCipher ? (
+                    <EncryptionForm 
+                      encryptionMethod={encryptionMethod}
+                      passwordValue={password}
+                      setPasswordValue={setPassword}
                     />
-                    <p className="text-xs text-slate-500 mt-1">
-                      Remember this password! You'll need it to extract the message later.
-                    </p>
-                  </div>
+                  ) : (
+                    <div>
+                      <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
+                        Encryption password
+                      </label>
+                      <input
+                        type="password"
+                        id="password"
+                        className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        placeholder="Enter a strong password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                      <p className="text-xs text-slate-500 mt-1">
+                        Remember this password! You'll need it to extract the message later.
+                      </p>
+                    </div>
+                  )}
                   
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">
@@ -221,15 +237,7 @@ const EmbeddingPage: React.FC = () => {
                 iconLeft={<FileText size={18} />}
                 fullWidth
                 isLoading={isProcessing}
-                onClick={() => {
-                  console.log('Button clicked');
-                  console.log('Message:', message);
-                  console.log('Password:', password);
-                  console.log('Encryption Method:', encryptionMethod);
-                  console.log('File:', uploadedFile);
-                  console.log('Media Type:', mediaType);
-                  handleEmbedding();
-                }}
+                onClick={handleEmbedding}
                 disabled={!message || !password || !encryptionMethod || !uploadedFile}
               >
                 Hide Message
@@ -305,7 +313,7 @@ const EmbeddingPage: React.FC = () => {
           <p className="text-sm text-slate-400">
             All processing happens in your browser. Your files and messages never leave your device.
             The encryption and embedding process is completely private. Remember to share the password
-            through a separate, secure channel from the file itself.
+            or key through a separate, secure channel from the file itself.
           </p>
         </div>
       </div>

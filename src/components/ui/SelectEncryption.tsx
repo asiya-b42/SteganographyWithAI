@@ -8,6 +8,10 @@ interface EncryptionOption {
   name: string;
   description: string;
   icon: JSX.Element;
+  inputLabel: string;
+  inputType: string;
+  inputPlaceholder: string;
+  inputHelp?: string;
 }
 
 interface SelectEncryptionProps {
@@ -22,42 +26,68 @@ const SelectEncryption: React.FC<SelectEncryptionProps> = ({ selectedMethod, onC
       name: 'AES-256',
       description: 'Advanced Encryption Standard, high security for sensitive data',
       icon: <ShieldCheck className="h-6 w-6" />,
+      inputLabel: 'Password',
+      inputType: 'password',
+      inputPlaceholder: 'Enter a secure password',
+      inputHelp: 'Use a strong password for better security'
     },
     {
       id: 'des',
       name: 'Triple DES',
       description: 'Applies DES algorithm three times to each data block',
       icon: <KeyRound className="h-6 w-6" />,
+      inputLabel: 'Password',
+      inputType: 'password',
+      inputPlaceholder: 'Enter a secure password'
     },
     {
       id: 'rsa',
       name: 'RSA',
       description: 'Asymmetric encryption with public and private keys',
       icon: <Lock className="h-6 w-6" />,
+      inputLabel: 'Password',
+      inputType: 'password',
+      inputPlaceholder: 'Enter a secure password'
     },
     {
       id: 'caesar',
       name: 'Caesar Cipher',
       description: 'Simple substitution cipher with fixed letter shift',
       icon: <AlignJustify className="h-6 w-6" />,
+      inputLabel: 'Shift Value',
+      inputType: 'number',
+      inputPlaceholder: 'Enter a number from 1-25',
+      inputHelp: 'This is the number of positions each letter is shifted'
     },
     {
       id: 'playfair',
       name: 'Playfair Cipher',
       description: 'Encrypts pairs of letters using a key table',
       icon: <Grid className="h-6 w-6" />,
+      inputLabel: 'Keyword',
+      inputType: 'text',
+      inputPlaceholder: 'Enter a keyword',
+      inputHelp: 'This word is used to generate the cipher key square'
     },
     {
       id: 'hill',
       name: 'Hill Cipher',
       description: 'Uses matrix multiplication for encryption',
       icon: <Hash className="h-6 w-6" />,
+      inputLabel: 'Key Matrix',
+      inputType: 'text',
+      inputPlaceholder: 'Format: a,b;c,d (2x2 matrix)',
+      inputHelp: 'Example: 1,2;3,4 for matrix [[1,2],[3,4]]'
     },
     {
       id: 'vigenere',
       name: 'Vigenère Cipher',
       description: 'Polyalphabetic substitution using a keyword',
       icon: <FileText className="h-6 w-6" />,
+      inputLabel: 'Keyword',
+      inputType: 'text',
+      inputPlaceholder: 'Enter a keyword',
+      inputHelp: 'A longer keyword provides better security'
     },
   ];
 
