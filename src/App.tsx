@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Shield, FileText, Unlock, Home } from 'lucide-react';
+import { Home, FileText, Unlock, Shield } from 'lucide-react';
 
 import Header from './components/layout/Header';
 import Navbar from './components/layout/Navbar';
@@ -22,10 +22,9 @@ function App() {
   return (
     <AppProvider>
       <Router>
-        <div className="flex flex-col min-h-screen bg-slate-900 text-slate-100">
+        <div className="flex flex-col min-h-screen bg-white text-gray-800">
           <Header />
-          <Navbar items={navItems} />
-          <main className="flex-grow container mx-auto px-4 py-8">
+          <main className="flex-grow">
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/detect" element={<DetectionPage />} />

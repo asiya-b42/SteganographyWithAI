@@ -17,7 +17,7 @@ const Header: React.FC = () => {
   return (
     <header
       className={`sticky top-0 z-50 transition-all duration-300 ${
-        scrolled ? 'bg-slate-900/95 backdrop-blur-sm shadow-lg' : 'bg-transparent'
+        scrolled ? 'bg-white shadow-md' : 'bg-white'
       }`}
     >
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
@@ -25,21 +25,18 @@ const Header: React.FC = () => {
           to="/" 
           className="flex items-center space-x-2 text-2xl font-bold"
         >
-          <Lock className="text-indigo-500" size={28} />
-          <span className="gradient-text">SecureSteg</span>
+          <Lock className="text-blue-600" size={28} />
+          <span className="bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent">StegoSafe</span>
         </Link>
         
-        <div className="flex items-center space-x-4">
-          <div className="hidden md:flex items-center space-x-2 text-sm text-slate-400">
-            <span>End-to-end encryption</span>
-          </div>
-          <Link
-            to="/detect"
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center space-x-1 shadow-lg"
-          >
-            <Shield size={18} />
-            <span>Detect</span>
-          </Link>
+        <div className="flex items-center space-x-6">
+          <nav className="hidden md:flex items-center space-x-6">
+            <Link to="/" className="text-gray-700 hover:text-blue-600 font-medium">Home</Link>
+            <Link to="/embed" className="text-gray-700 hover:text-blue-600 font-medium">Hide</Link>
+            <Link to="/extract" className="text-gray-700 hover:text-blue-600 font-medium">Extract</Link>
+            <Link to="/detect" className="text-gray-700 hover:text-blue-600 font-medium">Detect</Link>
+          </nav>
+    
         </div>
       </div>
     </header>
