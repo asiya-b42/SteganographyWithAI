@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck, FileText, Unlock, ArrowRight, Lock, Fingerprint, Eye } from 'lucide-react';
@@ -36,12 +35,6 @@ const HomePage = () => {
               className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-xl font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all flex items-center"
             >
               Get Started <ArrowRight className="ml-2" size={18} />
-            </Link>
-            <Link 
-              to="/detect" 
-              className="bg-white border-2 border-blue-600 text-blue-600 px-8 py-4 rounded-xl font-medium shadow-md hover:shadow-lg transform hover:-translate-y-1 transition-all"
-            >
-              Learn More
             </Link>
           </div>
         </div>
@@ -200,47 +193,6 @@ const HomePage = () => {
                   AI-powered detection of hidden content
                 </p>
               </div>
-              
-              <div className="bg-white p-6 rounded-xl shadow-md transform hover:-translate-y-1 transition-transform hover:shadow-lg">
-                <div className="bg-cyan-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
-                  <ShieldCheck size={24} className="text-cyan-600" />
-                </div>
-                <h4 className="font-bold text-gray-800 mb-2">Privacy</h4>
-                <p className="text-gray-600 text-sm">
-                  Your data never leaves your device
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-      
-      {/* CTA section */}
-      <section className="py-20 px-4">
-        <div className="max-w-5xl mx-auto bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-xl overflow-hidden">
-          <div className="flex flex-col md:flex-row items-center">
-            <div className="md:w-1/2 p-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                Ready to secure your communications?
-              </h2>
-              <p className="text-blue-100 mb-8">
-                Start using StegaSafe today to protect your sensitive information with advanced
-                steganography and encryption techniques.
-              </p>
-              <Link
-                to="/embed"
-                className="inline-block bg-white text-blue-600 px-8 py-4 rounded-xl font-medium shadow-md hover:shadow-lg transform hover:-translate-y-1 transition-all"
-              >
-                Get Started Now
-              </Link>
-            </div>
-            <div className="md:w-1/2 relative h-full py-6 px-10 md:py-0">
-              <div className="absolute inset-0 bg-blue-700 opacity-20"></div>
-              <img
-                src="https://images.unsplash.com/photo-1563986768609-322da13575f3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                alt="Security Concept"
-                className="rounded-xl shadow-lg relative z-10 max-h-60 md:max-h-none"
-              />
             </div>
           </div>
         </div>
