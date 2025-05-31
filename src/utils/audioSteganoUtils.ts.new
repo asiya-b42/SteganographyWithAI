@@ -77,7 +77,6 @@ const getAudioBuffer = async (audioFile: File): Promise<AudioBuffer> => {
 // Embed data in audio with enhanced reliability
 export const embedDataInAudio = async (audioFile: File, data: string): Promise<Blob> => {
   try {
-    const audioContext = getAudioContext();
     const audioBuffer = await getAudioBuffer(audioFile);
     const binaryData = textToBinary(data);
     const binarySignature = textToBinary(SIGNATURE);
@@ -111,18 +110,11 @@ export const embedDataInAudio = async (audioFile: File, data: string): Promise<B
       }
     }
     
-    const outputBuffer = audioContext.createBuffer(
-      audioBuffer.numberOfChannels,
-      audioBuffer.length,
-      audioBuffer.sampleRate
-    );
+    const outputBuffer = audioBuffer.getChannelData(0) === channelData 
+      ? audioContext.createBuffer(audioBuffer.numberOfChannels, audioBuffer.length, audioBuffer.sampleRate)
+      : audioBuffer;
     
     outputBuffer.copyToChannel(modifiedChannelData, 0);
-    
-    // Copy original data to other channels if any
-    for (let i = 1; i < audioBuffer.numberOfChannels; i++) {
-      outputBuffer.copyToChannel(audioBuffer.getChannelData(i), i);
-    }
     
     return new Blob([audioBufferToWav(outputBuffer)], { type: 'audio/wav' });
   } catch (error) {
@@ -210,8 +202,6 @@ export const extractDataFromAudio = async (audioFile: File): Promise<string> => 
       throw new Error('No hidden message found (weak signature)');
     }
 
-    console.log(`Found signature with score ${bestScore}/${SIGNATURE.length} at offset ${bestOffset}`);
-
     // Read length bits
     let lengthBinary = '';
     const lengthStart = bestOffset + signatureLength * SAMPLES_PER_BIT;
@@ -262,115 +252,6 @@ export const extractDataFromAudio = async (audioFile: File): Promise<string> => 
     return extractedMessage;
   } catch (error) {
     console.error('Error in extractDataFromAudio:', error);
-    throw error;
-  }
-};
-
-// Detect hidden content in audio with improved detection
-export const detectHiddenMessageInAudio = async (audioFile: File): Promise<{ hasHiddenContent: boolean; confidence: number }> => {
-  try {
-    const audioBuffer = await getAudioBuffer(audioFile);
-    const rawData = audioBuffer.getChannelData(0);
-    
-    // Apply basic signal processing
-    const channelData = new Float32Array(rawData.length);
-    const halfWindow = Math.floor(FILTER_WINDOW_SIZE / 2);
-    
-    for (let i = 0; i < rawData.length; i++) {
-      let sum = 0;
-      let count = 0;
-      for (let j = Math.max(0, i - halfWindow); j <= Math.min(rawData.length - 1, i + halfWindow); j++) {
-        sum += rawData[j];
-        count++;
-      }
-      channelData[i] = sum / count;
-    }
-
-    // Try to find signature pattern
-    const signatureLength = SIGNATURE.length * 8;
-    let bestScore = 0;
-    
-    for (let offset = 0; offset < SAMPLES_PER_BIT * 4; offset++) {
-      let score = 0;
-      let binary = '';
-      
-      for (let i = 0; i < signatureLength; i++) {
-        let posSum = 0;
-        let negSum = 0;
-        
-        for (let j = 0; j < SAMPLES_PER_BIT; j++) {
-          const pos = offset + i * SAMPLES_PER_BIT + j;
-          if (pos >= channelData.length) continue;
-          
-          const value = channelData[pos];
-          if (value > 0) posSum += value;
-          else negSum -= value;
-        }
-        
-        binary += (posSum >= negSum) ? '1' : '0';
-      }
-      
-      const extracted = binaryToText(binary);
-      for (let i = 0; i < SIGNATURE.length; i++) {
-        if (extracted[i] === SIGNATURE[i]) {
-          score += 1;
-        }
-        if (Math.abs(extracted.charCodeAt(i) - SIGNATURE.charCodeAt(i)) <= 2) {
-          score += 0.25;
-        }
-      }
-      
-      if (score > bestScore) {
-        bestScore = score;
-      }
-    }
-
-    // Statistical analysis for additional confidence
-    const sampleSize = Math.min(20000, channelData.length);
-    let patternCount = 0;
-    let signalStrength = 0;
-    
-    for (let i = 0; i < sampleSize - SAMPLES_PER_BIT; i++) {
-      let consistent = true;
-      const direction = channelData[i] >= 0;
-      
-      for (let j = 1; j < SAMPLES_PER_BIT; j++) {
-        if ((channelData[i + j] >= 0) !== direction) {
-          consistent = false;
-          break;
-        }
-      }
-      
-      if (consistent) {
-        patternCount++;
-      }
-      
-      signalStrength += Math.abs(channelData[i]);
-    }
-    
-    const patternRatio = patternCount / (sampleSize - SAMPLES_PER_BIT);
-    const avgSignalStrength = signalStrength / sampleSize;
-    
-    // Calculate final confidence
-    let confidence = (bestScore / SIGNATURE.length) * 0.7;  // 70% weight to signature match
-    
-    if (patternRatio > 0.3) {  // Natural audio rarely has such consistent patterns
-      confidence += 0.2;
-    }
-    
-    if (avgSignalStrength > MIN_VOLUME_THRESHOLD) {
-      confidence += 0.1;
-    }
-    
-    // Cap confidence at 95%
-    confidence = Math.min(0.95, confidence);
-    
-    return {
-      hasHiddenContent: confidence >= SIGNATURE_THRESHOLD,
-      confidence
-    };
-  } catch (error) {
-    console.error('Error in detectHiddenMessageInAudio:', error);
     throw error;
   }
 };
