@@ -109,11 +109,11 @@ export const aesDecrypt = async (encryptedMessage: string, password: string): Pr
 };
 
 // DES encryption (simplified for browser)
-// DES encryption (emulated in the browser)
+// DES encryption (emulated in the browser as Triple DES)
 export const desEncrypt = async (message: string, password: string): Promise<string> => {
   const encoder = new TextEncoder();
   const data = encoder.encode(message);
-  
+
   // Derive key from password with appropriate length for Triple DES
   const keyMaterial = await window.crypto.subtle.importKey(
     'raw',
@@ -122,9 +122,9 @@ export const desEncrypt = async (message: string, password: string): Promise<str
     false,
     ['deriveBits', 'deriveKey']
   );
-  
-  // DES uses a 64-bit key, Triple DES uses 192 bits (3 * 64)
-  // We'll use AES-CBC with a 192-bit key which is what Triple DES would use
+
+  // Triple DES uses 168 bits (3 * 56), but WebCrypto does not support DES/3DES.
+  // We'll use AES-CBC with a 256-bit key for browser compatibility and strong security.
   const salt = window.crypto.getRandomValues(new Uint8Array(16));
   const key = await window.crypto.subtle.deriveKey(
     {
@@ -134,15 +134,14 @@ export const desEncrypt = async (message: string, password: string): Promise<str
       hash: 'SHA-256',
     },
     keyMaterial,
-    // 3-key Triple DES equivalent
-    { name: 'AES-CBC', length: 192 },
+    { name: 'AES-CBC', length: 256 }, // Use 256 bits for compatibility
     false,
     ['encrypt']
   );
-  
+
   // Generate IV
   const iv = window.crypto.getRandomValues(new Uint8Array(16));
-  
+
   // Encrypt
   const encryptedContent = await window.crypto.subtle.encrypt(
     {
@@ -152,19 +151,18 @@ export const desEncrypt = async (message: string, password: string): Promise<str
     key,
     data
   );
-  
+
   // Add a custom header to identify this as "DES" encrypted
-  // This helps with debugging and clarifies the intended algorithm
   const header = encoder.encode('DES-EMULATED');
-  
-  // Combine salt, iv, and encrypted content
+
+  // Combine header, salt, iv, and encrypted content
   const encryptedContentArr = new Uint8Array(encryptedContent);
   const result = new Uint8Array(header.length + salt.length + iv.length + encryptedContentArr.length);
   result.set(header, 0);
   result.set(salt, header.length);
   result.set(iv, header.length + salt.length);
   result.set(encryptedContentArr, header.length + salt.length + iv.length);
-  
+
   // Convert to base64
   return btoa(String.fromCharCode(...result));
 };
@@ -173,21 +171,21 @@ export const desDecrypt = async (encryptedMessage: string, password: string): Pr
   try {
     // Decode base64
     const encryptedBytes = Uint8Array.from(atob(encryptedMessage), (c) => c.charCodeAt(0));
-    
+
     // Check for header
     const decoder = new TextDecoder();
-    const header = decoder.decode(encryptedBytes.slice(0, 11));
-    
+    const header = decoder.decode(encryptedBytes.slice(0, 12)); // 'DES-EMULATED' is 12 bytes
+
     if (header !== 'DES-EMULATED') {
       throw new Error('Invalid encryption format');
     }
-    
+
     // Extract salt, iv, and encrypted content
-    const salt = encryptedBytes.slice(11, 11 + 16);
-    const iv = encryptedBytes.slice(11 + 16, 11 + 16 + 16);
-    const encryptedContent = encryptedBytes.slice(11 + 16 + 16);
-    
-    // Derive key from password
+    const salt = encryptedBytes.slice(12, 12 + 16);
+    const iv = encryptedBytes.slice(12 + 16, 12 + 16 + 16);
+    const encryptedContent = encryptedBytes.slice(12 + 16 + 16);
+
+    // Derive key from password (must match encryption)
     const encoder = new TextEncoder();
     const keyMaterial = await window.crypto.subtle.importKey(
       'raw',
@@ -196,8 +194,6 @@ export const desDecrypt = async (encryptedMessage: string, password: string): Pr
       false,
       ['deriveBits', 'deriveKey']
     );
-    
-    // Derive key
     const key = await window.crypto.subtle.deriveKey(
       {
         name: 'PBKDF2',
@@ -206,11 +202,11 @@ export const desDecrypt = async (encryptedMessage: string, password: string): Pr
         hash: 'SHA-256',
       },
       keyMaterial,
-      { name: 'AES-CBC', length: 192 },
+      { name: 'AES-CBC', length: 256 }, // Must match encryption (256 bits)
       false,
       ['decrypt']
     );
-    
+
     // Decrypt
     const decryptedContent = await window.crypto.subtle.decrypt(
       {
@@ -220,7 +216,7 @@ export const desDecrypt = async (encryptedMessage: string, password: string): Pr
       key,
       encryptedContent
     );
-    
+
     // Decode result
     return decoder.decode(decryptedContent);
   } catch (error) {
