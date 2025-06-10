@@ -15,8 +15,23 @@ app.use(express.json());
 
 db.run('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, email TEXT UNIQUE, password TEXT)');
 
+function isValidEmail(email) {
+  // Basic email regex: must have @ and a domain, e.g. user@domain.com
+  return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+}
+
+function isValidPassword(password) {
+  return typeof password === 'string' && password.length >= 8;
+}
+
 app.post('/api/signup', (req, res) => {
   const { email, password } = req.body;
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ error: 'Invalid email format' });
+  }
+  if (!isValidPassword(password)) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters' });
+  }
   db.get('SELECT * FROM users WHERE email = ?', [email], (err, user) => {
     if (user) return res.status(400).json({ error: 'Email already registered' });
     const hash = bcrypt.hashSync(password, 10);
@@ -57,6 +72,12 @@ app.get('/api/user', auth, (req, res) => {
 // Forgot password endpoint
 app.post('/api/forgot-password', (req, res) => {
   const { email, newPassword } = req.body;
+  if (!isValidEmail(email)) {
+    return res.json({ success: true }); // Always generic
+  }
+  if (!isValidPassword(newPassword)) {
+    return res.json({ success: true }); // Always generic
+  }
   db.get('SELECT * FROM users WHERE email = ?', [email], (err, user) => {
     if (err) {
       console.error('DB error:', err);
