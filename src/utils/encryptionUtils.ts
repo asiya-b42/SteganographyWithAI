@@ -355,16 +355,12 @@ export const rsaDecrypt = async (encryptedMessage: string, password: string): Pr
 
 // Caesar Cipher implementation
 export const caesarEncrypt = async (message: string, password: string): Promise<string> => {
+  // Validate Caesar key: must be a number between 1 and 25
+  if (!/^(?:[1-9]|1[0-9]|2[0-5])$/.test(password)) {
+    throw new Error('Caesar cipher key must be a number between 1 and 25');
+  }
+  const shift = parseInt(password, 10);
   try {
-    // Generate a shift value from the password (between 1-25)
-    const encoder = new TextEncoder();
-    const passwordData = encoder.encode(password);
-    const passwordHash = await window.crypto.subtle.digest('SHA-256', passwordData);
-    const hashArray = Array.from(new Uint8Array(passwordHash));
-    
-    // Use first byte of hash modulo 25 + 1 to get a shift between 1 and 25
-    const shift = (hashArray[0] % 25) + 1;
-    
     // Add a prefix to identify this as Caesar cipher
     const prefix = 'CAESAR:';
     let encrypted = prefix;
@@ -403,6 +399,11 @@ export const caesarEncrypt = async (message: string, password: string): Promise<
 };
 
 export const caesarDecrypt = async (encryptedMessage: string, password: string): Promise<string> => {
+  // Validate Caesar key: must be a number between 1 and 25
+  if (!/^(?:[1-9]|1[0-9]|2[0-5])$/.test(password)) {
+    throw new Error('Caesar cipher key must be a number between 1 and 25');
+  }
+  const shift = parseInt(password, 10);
   try {
     // Decode base64
     const decoded = atob(encryptedMessage);
@@ -415,7 +416,7 @@ export const caesarDecrypt = async (encryptedMessage: string, password: string):
     // Extract shift value from the end
     const lastColonIndex = decoded.lastIndexOf(':');
     const shiftStr = decoded.substring(lastColonIndex + 1);
-    const shift = parseInt(shiftStr, 10);
+    // const shift = parseInt(shiftStr, 10);
     
     if (isNaN(shift) || shift < 1 || shift > 25) {
       throw new Error('Invalid shift value in Caesar cipher');
@@ -459,6 +460,10 @@ export const caesarDecrypt = async (encryptedMessage: string, password: string):
 
 // Playfair Cipher implementation
 export const playfairEncrypt = async (message: string, password: string): Promise<string> => {
+  // Validate Playfair key: only letters
+  if (!/^[A-Za-z]+$/.test(password)) {
+    throw new Error('Playfair cipher key must only contain letters (A-Z, a-z)');
+  }
   try {
     // Generate a key grid from the password
     const key = await generatePlayfairKey(password);
@@ -496,6 +501,10 @@ export const playfairEncrypt = async (message: string, password: string): Promis
 };
 
 export const playfairDecrypt = async (encryptedMessage: string, password: string): Promise<string> => {
+  // Validate Playfair key: only letters
+  if (!/^[A-Za-z]+$/.test(password)) {
+    throw new Error('Playfair cipher key must only contain letters (A-Z, a-z)');
+  }
   try {
     // Decode base64
     const decoded = atob(encryptedMessage);
@@ -603,6 +612,10 @@ const decryptDigraph = (digraph: string, grid: string[][]): string => {
 
 // Hill Cipher Implementation
 export const hillEncrypt = async (message: string, password: string): Promise<string> => {
+  // Validate Hill key: only letters
+  if (!/^[A-Za-z]+$/.test(password)) {
+    throw new Error('Hill cipher key must only contain letters (A-Z, a-z)');
+  }
   try {
     // Generate a 2x2 key matrix from the password
     const keyMatrix = await generateHillKeyMatrix(password);
@@ -639,6 +652,10 @@ export const hillEncrypt = async (message: string, password: string): Promise<st
 };
 
 export const hillDecrypt = async (encryptedMessage: string, password: string): Promise<string> => {
+  // Validate Hill key: only letters
+  if (!/^[A-Za-z]+$/.test(password)) {
+    throw new Error('Hill cipher key must only contain letters (A-Z, a-z)');
+  }
   try {
     // Decode base64
     const decoded = atob(encryptedMessage);
@@ -756,6 +773,10 @@ const gcd = (a: number, b: number): number => {
 
 // Vigenère Cipher Implementation
 export const vigenereEncrypt = async (message: string, password: string): Promise<string> => {
+  // Validate Vigenere key: only letters
+  if (!/^[A-Za-z]+$/.test(password)) {
+    throw new Error('Vigenere cipher key must only contain letters (A-Z, a-z)');
+  }
   try {
     // Prepare the key from the password (repeating it to match the message length)
     const key = password.toUpperCase().replace(/[^A-Z]/g, '');
@@ -792,6 +813,10 @@ export const vigenereEncrypt = async (message: string, password: string): Promis
 };
 
 export const vigenereDecrypt = async (encryptedMessage: string, password: string): Promise<string> => {
+  // Validate Vigenere key: only letters
+  if (!/^[A-Za-z]+$/.test(password)) {
+    throw new Error('Vigenere cipher key must only contain letters (A-Z, a-z)');
+  }
   try {
     // Decode base64
     const decoded = atob(encryptedMessage);
