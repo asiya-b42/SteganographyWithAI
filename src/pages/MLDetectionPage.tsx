@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { detectStegoInImage, loadStegoDetectionModel } from '../utils/mlStegoDetector';
 import MLDetectionResult from '../components/features/detection/MLDetectionResult';
+import FolderInput from '../components/features/detection/FolderInput';
 
 const MLDetectionPage: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<{ hasHiddenContent: boolean; confidence: number } | null>(null);
   const [loading, setLoading] = useState(false);
   const [modelLoaded, setModelLoaded] = useState(false);
+  const [cleanFiles, setCleanFiles] = useState<File[]>([]);
+  const [stegoFiles, setStegoFiles] = useState<File[]>([]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -28,8 +31,14 @@ const MLDetectionPage: React.FC = () => {
   };
 
   return (
-    <div style={{ maxWidth: 500, margin: '40px auto', padding: 24, background: '#fafafa', borderRadius: 12 }}>
+    <div style={{ maxWidth: 600, margin: '40px auto', padding: 24, background: '#fafafa', borderRadius: 12 }}>
       <h2>ML-Based Image Steganography Detection (Demo)</h2>
+      <FolderInput
+        onFoldersSelected={(clean, stego) => {
+          setCleanFiles(clean);
+          setStegoFiles(stego);
+        }}
+      />
       <p style={{ color: '#555', fontSize: 14, marginBottom: 16 }}>
         This uses a Convolutional Neural Network (CNN) to detect hidden data in images.<br />
         ()

@@ -1,67 +1,64 @@
-// Dummy ML-based steganography detector for images
-// This file pretends to use a machine learning model for steganalysis, but does not actually run any ML code.
+// Real ML-based steganography detector for images using TensorFlow.js
+// This file loads a TensorFlow.js model for steganalysis and uses it to detect steganography in images.
+
+import * as tf from '@tensorflow/tfjs';
+
+let model: tf.LayersModel | null = null;
 
 /**
- * Pretend to load a machine learning model for steganography detection.
- * In reality, this is just a placeholder for demonstration purposes.
+ * Load the machine learning model for steganography detection.
+ * Expects a model.json file in the public directory.
  */
-let modelLoaded = false;
-
 export async function loadStegoDetectionModel(): Promise<void> {
-  // Simulate async model loading
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Pretend to load a TensorFlow.js model
-      // e.g., tf.loadLayersModel('model.json')
-      modelLoaded = true;
-      console.log('[ML] Stego detection model loaded (dummy)');
-      resolve();
-    }, 800);
+  if (model) return;
+  model = await tf.loadLayersModel('/model.json');
+  console.log('[ML] Stego detection model loaded (real TensorFlow.js model)');
+}
+
+/**
+ * Preprocess the image for ML model input.
+ * Resizes the image to 128x128 and normalizes the pixel values.
+ * @param imageFile The image file to preprocess
+ * @returns A tensor representing the image
+ */
+function preprocessImage(imageFile: File): Promise<tf.Tensor3D> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        // Resize to 128x128 and normalize
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject('No canvas context');
+        ctx.drawImage(img, 0, 0, 128, 128);
+        const imageData = ctx.getImageData(0, 0, 128, 128);
+        const data = tf.browser.fromPixels(imageData).toFloat().div(255);
+        resolve(data);
+      };
+      img.onerror = reject;
+      img.src = reader.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(imageFile);
   });
 }
 
 /**
- * Pretend to preprocess the image for ML model input.
- * @param imageFile The image file to preprocess
- * @returns Dummy tensor-like array
- */
-function preprocessImage(imageFile: File): number[][][] {
-  // In a real scenario, you would decode the image, resize, normalize, etc.
-  // Here, we just return a random tensor-like array
-  const width = 128,
-    height = 128,
-    channels = 3;
-  const tensor = Array.from({ length: height }, () =>
-    Array.from({ length: width }, () =>
-      Array.from({ length: channels }, () => Math.random())
-    )
-  );
-  return tensor;
-}
-
-/**
- * Pretend to run a machine learning model to detect steganography in an image.
- * Always returns a random confidence for demo purposes.
+ * Detect steganography in an image using the loaded ML model.
  * @param imageFile The image file to check
  * @returns An object with hasHiddenContent and confidence
  */
 export async function detectStegoInImage(imageFile: File): Promise<{ hasHiddenContent: boolean; confidence: number }> {
-  if (!modelLoaded) {
-    throw new Error('ML model not loaded. Call loadStegoDetectionModel() first.');
-  }
-  // Simulate preprocessing
-  const tensor = preprocessImage(imageFile);
-  // Simulate model inference delay
-  await new Promise((resolve) => setTimeout(resolve, 400));
-  // Simulate a fake prediction using the tensor shape
-  const confidence =
-    Math.abs(
-      Math.sin(
-        tensor[0][0][0] * 10 + tensor[10][10][1] * 5 + tensor[20][20][2]
-      )
-    ) *
-      0.7 +
-    Math.random() * 0.3;
+  if (!model) throw new Error('ML model not loaded. Call loadStegoDetectionModel() first.');
+  const tensor = await preprocessImage(imageFile);
+  // Model expects shape [1, 128, 128, 3]
+  const input = tensor.expandDims(0);
+  const prediction = (model.predict(input) as tf.Tensor).dataSync();
+  // Assume binary classification: [prob_no_stego, prob_stego]
+  const confidence = prediction[1] ?? 0;
   return {
     hasHiddenContent: confidence > 0.5,
     confidence,
