@@ -39,6 +39,26 @@ StegoSafe-CNS/
 3. **Open your browser:**
    Visit [http://localhost:5173](http://localhost:5173)
 
+## Setup Instructions (After Cloning)
+
+1. **Install backend dependencies:**
+   ```powershell
+   npm install
+   ```
+2. **Start the backend server:**
+   ```powershell
+   node server.js
+   ```
+   - This will automatically create a new `users.db` SQLite database file if it does not exist.
+3. **Sign up with a new email and password** using the signup page in your browser.
+   - This will create your user account in the new database.
+4. **Login** with your new credentials.
+
+> **Note:**
+> - The `users.db` file is not tracked by git and will not be present after cloning. It is created automatically by the backend.
+> - If you do not run the backend, login and signup will not work.
+> - You can inspect the database using the `sqlite3` CLI if needed.
+
 ## Usage
 - Go to the Embedding page to hide a message in an audio or image file.
 - Use the Extraction page to recover hidden messages.
