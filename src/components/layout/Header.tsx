@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Lock } from 'lucide-react';
+import { Lock, MessageCircle } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 
@@ -54,7 +54,10 @@ const Header: React.FC = () => {
             <Link to="/embed" className="text-gray-700 hover:text-blue-600 font-medium">Hide</Link>
             <Link to="/extract" className="text-gray-700 hover:text-blue-600 font-medium">Extract</Link>
             <Link to="/detect" className="text-gray-700 hover:text-blue-600 font-medium">Detect</Link>
-            {/* <Link to="/ml-detect" className="text-gray-700 hover:text-blue-600 font-medium">ML Detection</Link> */}
+            <Link to="/chatbot" className="text-gray-700 hover:text-blue-600 font-medium flex items-center">
+              <MessageCircle size={18} className="mr-1" />
+              AI Assistant
+            </Link>
           </nav>
           {isLoggedIn && (
             <button

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Shield, AlertTriangle, FileText, FileAudio, Info, ArrowRight, ChevronDown, Search, CheckCircle, XCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Shield, AlertTriangle, FileText, FileAudio, Info, ArrowRight, ChevronDown, Search, CheckCircle, XCircle, MessageCircle } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { detectHiddenMessageInImage } from '../utils/imageSteganoUtils';
 import { detectHiddenMessageInAudio } from '../utils/audioSteganoUtils';
@@ -235,9 +236,7 @@ const DetectionPage = () => {
     const confidencePercent = Math.round(confidence * 100);
     
     return (
-      <div className={`bg-white rounded-xl overflow-hidden shadow-lg border ${
-        hasHiddenContent ? 'border-blue-200' : 'border-blue-200'
-      }`}>
+      <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 p-10">
         <div className={`h-2 w-full ${
           hasHiddenContent 
             ? 'bg-gradient-to-r from-blue-500 to-indigo-500' 
@@ -307,6 +306,27 @@ const DetectionPage = () => {
             >
               Analyze Another File
             </button>
+          </div>
+        </div>
+        
+        {/* Learn More Section */}
+        <div className="mt-8 p-6 bg-blue-50 rounded-xl">
+          <div className="flex items-start">
+            <Info size={24} className="text-blue-600 mt-1 mr-4 flex-shrink-0" />
+            <div>
+              <h4 className="text-lg font-semibold text-gray-800 mb-2">Want to learn more about steganography detection?</h4>
+              <p className="text-gray-600 mb-4">
+                Our AI assistant can help you understand how steganography detection works and explain the techniques we use.
+              </p>
+              <Link
+                to="/chatbot"
+                className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium"
+              >
+                <MessageCircle size={18} className="mr-2" />
+                Ask the AI Assistant
+                <ArrowRight size={16} className="ml-1" />
+              </Link>
+            </div>
           </div>
         </div>
       </div>

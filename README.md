@@ -6,8 +6,9 @@ A modern web application for audio and image steganography, built with React and
 - **Audio Steganography**: Hide and extract messages in WAV audio files using robust, noise-resistant algorithms.
 - **Image Steganography**: Hide and extract messages in images (PNG, JPEG, etc.).
 - **Detection**: Detect the presence of hidden messages in audio or image files.
+- **AI Assistant**: Get help and learn about steganography with our Groq-powered chatbot.
 - **Modern UI**: Built with React, TypeScript, and Tailwind CSS for a clean, responsive experience.
-- **All Local**: All processing is done in your browser for privacy and security.
+- **All Local**: All processing is done in your browser for privacy and security (except for the AI chatbot).
 
 ## Project Structure
 ```
@@ -39,9 +40,25 @@ StegoSafe-CNS/
 3. **Open your browser:**
    Visit [http://localhost:5173](http://localhost:5173)
 
+## Environment Variables
+
+Before getting started, you'll need to set up your environment variables:
+
+1. Create a `.env` file in the root directory
+2. Add your Groq API key:
+   ```
+   REACT_APP_GROQ_API_KEY=your_groq_api_key_here
+   ```
+   > Get your API key from [Groq's website](https://groq.com)
+
 ## Setup Instructions (After Cloning)
 
-1. **Install backend dependencies:**
+1. **Set up environment variables:**
+   - Copy `.env.example` to `.env`
+   - Get a Groq API key from https://console.groq.com
+   - Add your Groq API key to the `.env` file
+
+2. **Install backend dependencies:**
    ```powershell
    npm install
    ```

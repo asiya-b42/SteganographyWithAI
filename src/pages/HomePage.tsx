@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, FileText, Unlock, ArrowRight, Lock, Fingerprint, Eye } from 'lucide-react';
+import { ShieldCheck, FileText, Unlock, ArrowRight, Lock, Fingerprint, Eye, MessageCircle } from 'lucide-react';
 
 const HomePage = () => {
   return (
@@ -193,10 +193,43 @@ const HomePage = () => {
                   AI-powered detection of hidden content
                 </p>
               </div>
+              
+              <div className="bg-white p-6 rounded-xl shadow-md transform hover:-translate-y-1 transition-transform hover:shadow-lg">
+                <div className="bg-purple-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                  <MessageCircle size={24} className="text-purple-600" />
+                </div>
+                <h4 className="font-bold text-gray-800 mb-2">AI Assistant</h4>
+                <p className="text-gray-600 text-sm">
+                  Get expert help with steganography
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </section>
+      
+      {/* CTA section */}
+      <section className="py-20 px-4">
+        <div className="max-w-5xl mx-auto bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-xl overflow-hidden">
+          <div className="flex flex-col md:flex-row items-center">
+            <div className="md:w-1/2 p-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                Need help with steganography?
+              </h2>
+              <p className="text-blue-100 mb-8">
+                Our AI assistant is ready to help you understand steganography concepts and guide you through using StegoSafe's features.
+              </p>
+              <Link
+                to="/chatbot"
+                className="inline-block bg-white text-blue-600 px-8 py-4 rounded-xl font-medium shadow-md hover:shadow-lg transform hover:-translate-y-1 transition-all"
+              >
+                Ask the AI Assistant
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+      
     </div>
   );
 };
